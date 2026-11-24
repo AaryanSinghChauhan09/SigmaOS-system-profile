@@ -1,0 +1,10 @@
+[component]
+name = "sigmaos-system-profile"
+version = "0.1.0"
+description = "Declarative whole-system profile composing all component configs"
+license = "GPL-3.0-or-later"
+
+[dependencies]
+sigmaos-config-system = "0.1"
+sigmaos-shell-config = "0.1"
+sigmaos-update-system = "0.1"
