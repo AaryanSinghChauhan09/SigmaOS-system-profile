@@ -10,6 +10,7 @@ sigmaos-system-profile --profile system.toml           # show resolved view
 sigmaos-system-profile --profile system.toml --json    # JSON output
 sigmaos-system-profile --profile system.toml --validate
 sigmaos-system-profile --profile system.toml --list    # enabled components
+sigmaos-system-profile --init                        # write default profile
 ```
 
 ## Profile format
