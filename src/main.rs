@@ -19,12 +19,28 @@ struct Cli {
     /// List enabled components.
     #[arg(long)]
     list: bool,
+    /// Write a default desktop profile if none exists.
+    #[arg(long)]
+    init: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     let cli = Cli::parse();
     let path = cli.profile.unwrap_or_else(default_profile_path);
+
+    if cli.init {
+        if path.exists() {
+            eprintln!("profile already exists: {}", path.display());
+            return Ok(());
+        }
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        SystemProfile::default_desktop().save(&path)?;
+        println!("wrote default profile to {}", path.display());
+        return Ok(());
+    }
 
     if cli.list {
         let p = SystemProfile::load(&path)?;

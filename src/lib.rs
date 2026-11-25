@@ -156,6 +156,33 @@ impl SystemProfile {
             .map(|(n, _)| n.clone())
             .collect()
     }
+
+    /// Default desktop profile used by `sigmaos-system-profile --init`.
+    pub fn default_desktop() -> Self {
+        let config_dir = directories::ProjectDirs::from("org", "sigmaos", "sigmaos")
+            .map(|d| d.config_dir().to_path_buf())
+            .unwrap_or_else(|| PathBuf::from(".config/sigmaos"));
+        let entry = |config: PathBuf| ComponentEntry {
+            enabled: true,
+            config: Some(config),
+            options: BTreeMap::new(),
+        };
+        Self {
+            name: "sigmaos-desktop".into(),
+            version: default_version(),
+            globals: BTreeMap::from([(
+                "locale".to_string(),
+                toml::Value::String("en_US.UTF-8".into()),
+            )]),
+            components: BTreeMap::from([
+                ("shell".to_string(), entry(config_dir.join("shell.toml"))),
+                (
+                    "initramfs".to_string(),
+                    entry(config_dir.join("initramfs.toml")),
+                ),
+            ]),
+        }
+    }
 }
 
 /// Default profile search path under XDG config.
@@ -228,5 +255,13 @@ config = "/tmp/shell.toml"
         };
         let r = p.resolve().unwrap();
         assert!(r.components[0].config.is_some());
+    }
+
+    #[test]
+    fn default_desktop_profile_validates() {
+        let p = SystemProfile::default_desktop();
+        assert_eq!(p.name, "sigmaos-desktop");
+        assert!(p.validate().unwrap().is_empty());
+        assert_eq!(p.enabled_components(), vec!["initramfs", "shell"]);
     }
 }
