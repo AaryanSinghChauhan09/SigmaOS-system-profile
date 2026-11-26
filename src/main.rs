@@ -28,6 +28,12 @@ struct Cli {
     /// Check that enabled components' config files exist and parse.
     #[arg(long)]
     doctor: bool,
+    /// Enable a component and save the profile.
+    #[arg(long, value_name = "NAME", conflicts_with = "disable")]
+    enable: Option<String>,
+    /// Disable a component and save the profile.
+    #[arg(long, value_name = "NAME")]
+    disable: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,6 +59,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for c in p.enabled_components() {
             println!("{c}");
         }
+        return Ok(());
+    }
+
+    if cli.enable.is_some() || cli.disable.is_some() {
+        let mut p = SystemProfile::load(&path)?;
+        if let Some(name) = &cli.enable {
+            p.set_enabled(name, true)?;
+            println!("enabled {name}");
+        }
+        if let Some(name) = &cli.disable {
+            p.set_enabled(name, false)?;
+            println!("disabled {name}");
+        }
+        p.save(&path)?;
+        println!("saved {}", path.display());
         return Ok(());
     }
 

@@ -173,6 +173,17 @@ impl SystemProfile {
         problems
     }
 
+    /// Enable or disable a component in place. Returns `NotEnabled`-style
+    /// error when the component is not declared in the profile.
+    pub fn set_enabled(&mut self, name: &str, enabled: bool) -> Result<(), ProfileError> {
+        let entry = self
+            .components
+            .get_mut(name)
+            .ok_or_else(|| ProfileError::Invalid(format!("unknown component: {name}")))?;
+        entry.enabled = enabled;
+        Ok(())
+    }
+
     /// List enabled component names in stable (sorted) order.
     pub fn enabled_components(&self) -> Vec<String> {
         self.components
@@ -333,6 +344,16 @@ config = "/tmp/shell.toml"
         };
         let r = p.resolve().unwrap();
         assert!(r.components[0].config.is_some());
+    }
+
+    #[test]
+    fn set_enabled_toggles_and_rejects_unknown() {
+        let mut p = SystemProfile::default_desktop();
+        p.set_enabled("shell", false).unwrap();
+        assert_eq!(p.enabled_components(), vec!["initramfs"]);
+        p.set_enabled("shell", true).unwrap();
+        assert!(p.enabled_components().contains(&"shell".to_string()));
+        assert!(p.set_enabled("ghost", true).is_err());
     }
 
     #[test]
