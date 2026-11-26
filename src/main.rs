@@ -25,6 +25,9 @@ struct Cli {
     /// Write a default desktop profile if none exists.
     #[arg(long)]
     init: bool,
+    /// Check that enabled components' config files exist and parse.
+    #[arg(long)]
+    doctor: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -54,6 +57,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let profile = SystemProfile::load(&path)?;
+
+    if cli.doctor {
+        let problems = profile.doctor();
+        for p in &problems {
+            eprintln!("problem: {p}");
+        }
+        if problems.is_empty() {
+            println!("profile '{}' healthy", profile.name);
+        } else {
+            std::process::exit(1);
+        }
+        return Ok(());
+    }
 
     if cli.validate {
         let warnings = profile.validate()?;

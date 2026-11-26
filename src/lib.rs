@@ -148,6 +148,31 @@ impl SystemProfile {
         Ok(warnings)
     }
 
+    /// Health-check enabled components: each declared config path must
+    /// exist and parse as TOML. Returns one problem line per failure;
+    /// an empty vec means the profile is healthy.
+    pub fn doctor(&self) -> Vec<String> {
+        let mut problems = Vec::new();
+        for (name, entry) in &self.components {
+            if !entry.enabled {
+                continue;
+            }
+            let Some(path) = &entry.config else {
+                problems.push(format!("{name}: enabled but no config path"));
+                continue;
+            };
+            match std::fs::read_to_string(path) {
+                Err(e) => problems.push(format!("{name}: cannot read {}: {e}", path.display())),
+                Ok(text) => {
+                    if let Err(e) = toml::from_str::<toml::Value>(&text) {
+                        problems.push(format!("{name}: {} is not valid TOML: {e}", path.display()));
+                    }
+                }
+            }
+        }
+        problems
+    }
+
     /// List enabled component names in stable (sorted) order.
     pub fn enabled_components(&self) -> Vec<String> {
         self.components
@@ -232,6 +257,59 @@ config = "/tmp/shell.toml"
         };
         let w = p.validate().unwrap();
         assert_eq!(w.len(), 1);
+    }
+
+    #[test]
+    fn doctor_flags_missing_and_malformed_configs() {
+        let dir = std::env::temp_dir().join("sigmaos-profile-doctor");
+        std::fs::create_dir_all(&dir).unwrap();
+        let bad = dir.join("bad.toml");
+        std::fs::write(&bad, "not [valid toml\n").unwrap();
+        let good = dir.join("good.toml");
+        std::fs::write(&good, "key = 1\n").unwrap();
+        let p = SystemProfile {
+            name: "t".into(),
+            version: "0.1.0".into(),
+            globals: BTreeMap::new(),
+            components: BTreeMap::from([
+                (
+                    "ok".to_string(),
+                    ComponentEntry {
+                        enabled: true,
+                        config: Some(good),
+                        options: BTreeMap::new(),
+                    },
+                ),
+                (
+                    "broken".to_string(),
+                    ComponentEntry {
+                        enabled: true,
+                        config: Some(bad),
+                        options: BTreeMap::new(),
+                    },
+                ),
+                (
+                    "gone".to_string(),
+                    ComponentEntry {
+                        enabled: true,
+                        config: Some(dir.join("missing.toml")),
+                        options: BTreeMap::new(),
+                    },
+                ),
+                (
+                    "off".to_string(),
+                    ComponentEntry {
+                        enabled: false,
+                        config: Some(dir.join("missing.toml")),
+                        options: BTreeMap::new(),
+                    },
+                ),
+            ]),
+        };
+        let problems = p.doctor();
+        assert_eq!(problems.len(), 2);
+        assert!(problems.iter().any(|p| p.contains("broken")));
+        assert!(problems.iter().any(|p| p.contains("gone")));
     }
 
     #[test]
