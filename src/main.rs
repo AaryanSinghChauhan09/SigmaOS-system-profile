@@ -5,7 +5,10 @@ use sigmaos_system_profile::{default_profile_path, to_json, SystemProfile};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "sigmaos-system-profile", about = "SigmaOS declarative system profile")]
+#[command(
+    name = "sigmaos-system-profile",
+    about = "SigmaOS declarative system profile"
+)]
 struct Cli {
     /// Profile file path (default: ~/.config/sigmaos/system.toml).
     #[arg(short, long)]

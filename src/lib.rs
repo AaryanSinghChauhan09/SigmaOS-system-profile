@@ -93,8 +93,8 @@ impl SystemProfile {
 
     /// Save the profile to a TOML file atomically.
     pub fn save(&self, path: &Path) -> Result<(), ProfileError> {
-        let text = toml::to_string_pretty(self)
-            .map_err(|e| ProfileError::Invalid(e.to_string()))?;
+        let text =
+            toml::to_string_pretty(self).map_err(|e| ProfileError::Invalid(e.to_string()))?;
         let tmp = path.with_extension("toml.tmp");
         std::fs::write(&tmp, text)?;
         std::fs::rename(&tmp, path)?;
