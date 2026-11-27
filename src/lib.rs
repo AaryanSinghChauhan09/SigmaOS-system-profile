@@ -1,7 +1,7 @@
 //! SigmaOS system profile — declarative whole-system configuration.
 //!
 //! A `system.toml` profile composes per-component configs into one
-//! declarative system definition, NixOS-style. The profile names which
+//! declarative system definition using the SigmaOS config system design. The profile names which
 //! components are enabled and where each component's config lives;
 //! `resolve` merges them into a single effective view for validation
 //! and generation.

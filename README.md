@@ -1,6 +1,6 @@
 # SigmaOS System Profile
 
-Declarative whole-system configuration — a NixOS-style `system.toml`
+Declarative whole-system configuration — a SigmaOS config system `system.toml`
 that composes every component's config into one system definition.
 
 ## Usage
